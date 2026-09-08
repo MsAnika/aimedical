@@ -15,6 +15,16 @@ MEAN = [0.485, 0.456, 0.406]
 STD = [0.229, 0.224, 0.225]
 INPUT_SIZE = 224
 
+HAM10000_LABELS = {
+    "akiec": "Actinic keratoses",
+    "bcc": "Basal cell carcinoma",
+    "bkl": "Benign keratosis",
+    "df": "Dermatofibroma",
+    "mel": "Melanoma",
+    "nv": "Melanocytic nevi",
+    "vasc": "Vascular lesions",
+}
+
 
 def _build_model(arch: str, n_classes: int):
     import torch
@@ -30,14 +40,20 @@ def _build_model(arch: str, n_classes: int):
 
 
 class SkinDataset:
-    def __init__(self, images_dir: Path, csv_path: Path, classes: list[str]):
+    def __init__(self, images_dir: Path, csv_path: Path, classes: list[str], max_per_class: int | None = None, seed: int = 42):
         import pandas as pd
         import torch
         import torchvision.transforms as T
 
         df = pd.read_csv(csv_path)
-        df = df[df["dx"].isin(classes)]
+        df["class_name"] = df["dx"].map(HAM10000_LABELS)
+        df = df[df["class_name"].isin(classes)]
         df = df.drop_duplicates(subset="image_id")
+        if max_per_class is not None:
+            df = (
+                df.groupby("class_name", group_keys=False)
+                .sample(n=max_per_class, random_state=seed)
+            )
         df = df.reset_index(drop=True)
         self.df = df
         self.images_dir = Path(images_dir)
@@ -58,12 +74,18 @@ class SkinDataset:
 
         row = self.df.iloc[idx]
         img = Image.open(self.images_dir / f"{row['image_id']}.jpg").convert("RGB")
-        return self.transform(img), self.class_index[row["dx"]]
+        return self.transform(img), self.class_index[row["class_name"]]
 
 
-def _get_loaders(disease: str, data_dir: Path, batch_size: int, seed: int):
+def _get_loaders(
+    disease: str,
+    data_dir: Path,
+    batch_size: int,
+    seed: int,
+    max_per_class: int | None = None,
+):
     import torch
-    from torch.utils.data import DataLoader, random_split
+    from torch.utils.data import DataLoader, Subset, random_split
     from torchvision import datasets
     from torchvision.transforms import v2
 
@@ -93,10 +115,18 @@ def _get_loaders(disease: str, data_dir: Path, batch_size: int, seed: int):
         test_ds = datasets.ImageFolder(str(test_dir), transform=eval_transform) if test_dir.exists() else None
         val_ds = datasets.ImageFolder(str(val_dir), transform=eval_transform) if val_dir.exists() else None
         classes = train_ds.classes
+        if max_per_class is not None:
+            rng = np.random.default_rng(seed)
+            selected = []
+            targets = np.asarray(train_ds.targets)
+            for class_index in range(len(classes)):
+                indices = np.flatnonzero(targets == class_index)
+                selected.extend(rng.choice(indices, size=min(max_per_class, len(indices)), replace=False).tolist())
+            train_ds = Subset(train_ds, sorted(selected))
     elif disease == "skin":
         csv_path = data_dir / "skin" / "HAM10000_metadata.csv"
         images_dir = data_dir / "skin" / "images"
-        full = SkinDataset(images_dir, csv_path, spec.classes)
+        full = SkinDataset(images_dir, csv_path, spec.classes, max_per_class=max_per_class, seed=seed)
         classes = spec.classes
         n_val = max(1, int(0.15 * len(full)))
         n_test = max(1, int(0.15 * len(full)))
@@ -142,6 +172,7 @@ def main() -> None:
     parser.add_argument("--arch", choices=["resnet18", "efficientnet_b0"], default="resnet18")
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
+    parser.add_argument("--max-per-class", type=int, default=None)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--register", action="store_true", help="Record model version in the app database")
@@ -160,7 +191,7 @@ def main() -> None:
     print(f"Device: {device}")
 
     train_loader, val_loader, test_loader, classes = _get_loaders(
-        args.disease, args.data_dir, args.batch_size, args.seed
+        args.disease, args.data_dir, args.batch_size, args.seed, args.max_per_class
     )
     if val_loader is None:
         val_loader = test_loader

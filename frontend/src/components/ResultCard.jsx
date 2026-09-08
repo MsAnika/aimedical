@@ -14,7 +14,7 @@ export default function ResultCard({ prediction }) {
     setError("");
     try {
       const res = await API.createReport(token, prediction.id);
-      downloadUrl(res.download_url);
+      await downloadUrl(res.download_url, token);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -28,7 +28,14 @@ export default function ResultCard({ prediction }) {
         <h2>Prediction: {prediction.label}</h2>
         {prediction.is_demo && <span className="badge badge-demo">DEMO</span>}
         {prediction.report_url && (
-          <button className="btn btn-small" onClick={() => downloadUrl(prediction.report_url)}>
+          <button className="btn btn-small" onClick={async () => {
+            setError("");
+            try {
+              await downloadUrl(prediction.report_url, token);
+            } catch (err) {
+              setError(err.message);
+            }
+          }}>
             Download report
           </button>
         )}

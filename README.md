@@ -25,18 +25,34 @@ and structured clinical data, with explainability (Grad-CAM / SHAP), role-based 
 
 ## Quick start (local, no ML deps)
 
+From the project root, install the dependencies once:
+
 ```powershell
-# Backend
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r backend\requirements.txt
-uvicorn app.main:app --reload --port 8000     # run from backend\
-# API docs at http://localhost:8000/docs
-
-# Frontend (separate terminal)
 cd frontend
 npm install
-npm run dev                                     # http://localhost:5173
+cd ..
+```
+
+Then start both development servers with one command:
+
+```powershell
+.\start.ps1
+```
+
+This starts the API at http://localhost:8000/docs and the frontend at http://localhost:5173. No frontend build is required.
+
+To start them manually instead:
+
+```powershell
+# Backend (run from the project root)
+python -m uvicorn app.main:app --app-dir backend --reload --port 8000
+
+# Frontend (separate terminal, from the project root)
+cd frontend
+npm run dev
 ```
 
 Without trained model files, the API runs in **demo mode**: predictors return plausible,

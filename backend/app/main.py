@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import get_settings
 from app.core.database import Base, engine, get_db
+from app.services.ml.registry import get_registry
 
 # ------------------------------------------------------------------
 # 5️⃣  Structured JSON logging
@@ -20,7 +21,7 @@ class InterceptHandler(logging.Handler):
     tools like Datadog, Sentry, Loki, etc."""
     def emit(self, record: logging.LogRecord) -> None:
         payload = {
-            "time": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
+            "time": logging.Formatter().formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
             "level": record.levelname,
             "message": record.getMessage(),
             "module": record.module,
@@ -46,6 +47,7 @@ async def lifespan(app: FastAPI):
     logging.root.setLevel(logging.INFO)
     # Create DB tables on startup for dev/demo
     Base.metadata.create_all(bind=engine)
+    get_registry().load_models()
     yield
 
 app = FastAPI(

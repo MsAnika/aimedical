@@ -92,11 +92,27 @@ export const API = {
   },
 };
 
-export function downloadUrl(url) {
+export async function downloadUrl(url, token) {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    let detail = response.statusText || "Download failed.";
+    try {
+      const data = await response.json();
+      detail = normalizeErrorMessage(data);
+    } catch (_) {}
+    throw new Error(detail);
+  }
+
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get("Content-Disposition") || "";
+  const filename = contentDisposition.match(/filename="?([^";]+)"?/i)?.[1] || "medical-report.pdf";
+  const objectUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "";
+  a.href = objectUrl;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
+  URL.revokeObjectURL(objectUrl);
 }

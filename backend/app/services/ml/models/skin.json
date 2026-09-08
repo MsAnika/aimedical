@@ -1,0 +1,29 @@
+{
+  "classes": [
+    "Melanocytic nevi",
+    "Melanoma",
+    "Benign keratosis",
+    "Basal cell carcinoma",
+    "Actinic keratoses",
+    "Vascular lesions",
+    "Dermatofibroma"
+  ],
+  "arch": "resnet18",
+  "input_size": 224,
+  "mean": [
+    0.485,
+    0.456,
+    0.406
+  ],
+  "std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "metrics": {
+    "accuracy": 0.4230769230769231,
+    "precision": 0.4223356009070295,
+    "recall": 0.43714698000412283,
+    "f1": 0.4132557451885183
+  }
+}
