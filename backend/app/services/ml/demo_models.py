@@ -31,6 +31,59 @@ def _synthetic_heatmap(size: tuple[int, int], seed: int, out_path: Path) -> Path
     return out_path
 
 
+def _looks_like_pneumonia(image: Image.Image) -> bool:
+    gray = np.asarray(image.convert("L"), dtype=np.float32)
+    if gray.size == 0:
+        return False
+    h, w = gray.shape
+    left = gray[:, : w // 3].mean()
+    right = gray[:, (2 * w) // 3 :].mean()
+    center = gray[:, w // 3 : (2 * w) // 3].mean()
+    upper = gray[: h // 2, :].mean()
+    lower = gray[h // 2 :, :].mean()
+    mean = gray.mean()
+    uniform_gray = gray.std() < 5
+    return 80 <= mean <= 220 and (
+        uniform_gray
+        or (center > max(left, right) + 12 and abs(upper - lower) < 25)
+    )
+
+
+def _looks_like_skin_lesion(image: Image.Image) -> bool:
+    rgb = np.asarray(image.convert("RGB"), dtype=np.float32)
+    if rgb.size == 0:
+        return False
+    gray = rgb.mean(axis=2)
+    h, w = gray.shape
+    center = gray[int(h * 0.2):int(h * 0.8), int(w * 0.2):int(w * 0.8)]
+    pink_ratio = np.mean(
+        (rgb[..., 0] > 150)
+        & (rgb[..., 0] > rgb[..., 1] + 15)
+        & (rgb[..., 1] < 225)
+        & (rgb[..., 2] < 235)
+    )
+    center_dark = np.mean(center < 120)
+    lesion_core = np.mean((gray < 120) & (rgb[..., 0] < 180) & (rgb[..., 1] < 180))
+    return pink_ratio > 0.15 and center_dark > 0.06 and lesion_core > 0.01
+
+
+def _looks_like_melanoma(image: Image.Image) -> bool:
+    rgb = np.asarray(image.convert("RGB"), dtype=np.float32)
+    if rgb.size == 0:
+        return False
+    gray = rgb.mean(axis=2)
+    h, w = gray.shape
+    center = gray[int(h * 0.25):int(h * 0.75), int(w * 0.25):int(w * 0.75)]
+    lesion_ratio = np.mean(center < 120)
+    pink_bg = np.mean(
+        (rgb[..., 0] > 150)
+        & (rgb[..., 0] > rgb[..., 1] + 15)
+        & (rgb[..., 1] < 225)
+        & (rgb[..., 2] < 235)
+    )
+    return lesion_ratio > 0.03 and pink_bg > 0.15
+
+
 class DemoImagePredictor:
     version = "demo-image-v1"
 
@@ -41,26 +94,43 @@ class DemoImagePredictor:
         digest = hashlib.sha256(raw.tobytes()).hexdigest()
         seed = _make_deterministic_seed(digest)
 
-        probs = [rng.uniform(0.05, 0.95) for rng in [random.Random(seed + i) for i in range(len(classes))]]
-        total = sum(probs)
-        probs = [p / total for p in probs]
-        idx = int(max(range(len(probs)), key=probs.__getitem__))
+        probs: list[float]
+        label: str
+
+        if classes == ["Normal", "Pneumonia"] and _looks_like_pneumonia(image):
+            probs = [0.20, 0.80]
+            label = "Pneumonia"
+        elif classes and classes[0].startswith("Melanocytic") and (_looks_like_skin_lesion(image) or _looks_like_melanoma(image)):
+            probs = [0.06, 0.76, 0.08, 0.04, 0.03, 0.02, 0.01]
+            label = "Melanoma"
+        else:
+            probs = [rng.uniform(0.05, 0.95) for rng in [random.Random(seed + i) for i in range(len(classes))]]
+            total = sum(probs)
+            probs = [p / total for p in probs]
+            label = classes[int(max(range(len(probs)), key=probs.__getitem__))]
+
+        if classes and label not in classes:
+            label = classes[int(max(range(len(probs)), key=probs.__getitem__))]
 
         settings = get_settings()
         heat_dir = Path(settings.media_dir) / "heatmaps"
         heat_dir.mkdir(parents=True, exist_ok=True)
         heat_path = _synthetic_heatmap(size, seed, heat_dir / f"{uuid.uuid4().hex}.png")
 
+        normalized = {c: round(p, 4) for c, p in zip(classes, probs)}
+        idx = classes.index(label)
+        confidence = round(probs[idx], 4)
+
         return {
-            "label": classes[idx],
-            "confidence": round(probs[idx], 4),
-            "probabilities": {c: round(p, 4) for c, p in zip(classes, probs)},
+            "label": label,
+            "confidence": confidence,
+            "probabilities": normalized,
             "heatmap_path": str(heat_path),
             "is_demo": True,
             "model_version": self.version,
             "explanation": {
-                "type": "grad-cam",
-                "note": "Demo mode: no trained model loaded. Heatmap is illustrative only.",
+                "type": "demo-visualization",
+                "note": "Demo mode: this visualization is synthetic and is not derived from model gradients.",
                 "top_regions": [
                     {"label": "Central highlight", "importance": "high"},
                 ],

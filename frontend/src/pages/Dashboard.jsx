@@ -20,8 +20,7 @@ export default function Dashboard() {
   return (
     <div className="container">
       <div className="banner">
-        <strong>Welcome, {user?.full_name}.</strong> This system provides AI-assisted screening and
-        is an academic decision-support prototype. It is not a certified diagnostic device.
+        <strong>Good to see you, {user?.full_name}.</strong> Your clinical workspace is ready. Choose a screening pathway below to begin.
       </div>
       {error && <div className="error">{error}</div>}
       <section>

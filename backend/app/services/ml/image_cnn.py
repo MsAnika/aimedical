@@ -115,9 +115,14 @@ class ImageClassifier:
         import numpy as np
         from PIL import Image
 
-        cam_img = Image.fromarray((np.uint8(255 * cam)), mode="L").resize(image.size, Image.BILINEAR)
-        heat = Image.new("RGB", image.size, (0, 0, 0))
-        heat.putalpha(cam_img.point(lambda v: int(0.7 * v)))
+        cam_img = Image.fromarray(np.uint8(255 * cam), mode="L").resize(image.size, Image.BILINEAR)
+        heat_values = np.asarray(cam_img, dtype=np.float32) / 255.0
+        heat_rgb = np.zeros((*heat_values.shape, 3), dtype=np.uint8)
+        heat_rgb[..., 0] = np.uint8(np.clip(255 * heat_values * 2, 0, 255))
+        heat_rgb[..., 1] = np.uint8(np.clip(255 * (1 - np.abs(heat_values * 2 - 1)), 0, 255))
+        heat_rgb[..., 2] = np.uint8(np.clip(255 * (1 - heat_values) * 2, 0, 255))
+        heat = Image.fromarray(heat_rgb, mode="RGB").convert("RGBA")
+        heat.putalpha(cam_img.point(lambda value: int(0.7 * value)))
         overlay = image.convert("RGBA")
         merged = Image.alpha_composite(overlay, heat).convert("RGB")
         merged.save(out_path)

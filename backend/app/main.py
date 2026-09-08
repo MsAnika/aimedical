@@ -1,6 +1,7 @@
 import logging
 import sys
 import json
+from pathlib import Path
 from typing import Any
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,6 +53,10 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+media_path = Path(get_settings().media_dir)
+media_path.mkdir(parents=True, exist_ok=True)
+app.mount("/media", StaticFiles(directory=media_path), name="media")
 
 # Import route modules so that their `router` objects are available
 from app.api.routes import auth, predictions, history, reports, admin  # noqa: E402

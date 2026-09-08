@@ -60,7 +60,7 @@ export default function ResultCard({ prediction }) {
           )}
           <figure>
             <img src={prediction.heatmap_url} alt="heatmap" />
-            <figcaption>Grad-CAM overlay</figcaption>
+            <figcaption>{prediction.is_demo ? "Synthetic demo visualization" : "Grad-CAM model explanation"}</figcaption>
           </figure>
         </div>
       )}
