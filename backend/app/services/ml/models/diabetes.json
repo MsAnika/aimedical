@@ -1,0 +1,25 @@
+{
+  "feature_names": [
+    "pregnancies",
+    "glucose",
+    "blood_pressure",
+    "skin_thickness",
+    "insulin",
+    "bmi",
+    "diabetes_pedigree",
+    "age"
+  ],
+  "classes": [
+    "No Diabetes",
+    "Diabetes"
+  ],
+  "model_type": "rf",
+  "metrics": {
+    "accuracy": 0.7467532467532467,
+    "precision": 0.6595744680851063,
+    "recall": 0.5740740740740741,
+    "f1": 0.6138613861386139,
+    "roc_auc": 0.8166666666666667,
+    "test_size": 154
+  }
+}

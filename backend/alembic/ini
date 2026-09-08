@@ -1,0 +1,5 @@
+[alembic]
+script_location = ../versions
+pythonpath = .
+section = migration
+default_ulimit = false

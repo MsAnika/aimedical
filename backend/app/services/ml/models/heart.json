@@ -1,0 +1,30 @@
+{
+  "feature_names": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+  ],
+  "classes": [
+    "No Heart Disease",
+    "Heart Disease"
+  ],
+  "model_type": "xgb",
+  "metrics": {
+    "accuracy": 0.8333333333333334,
+    "precision": 0.8,
+    "recall": 0.8333333333333334,
+    "f1": 0.8163265306122449,
+    "roc_auc": 0.8666666666666666,
+    "test_size": 54
+  }
+}

@@ -1,0 +1,141 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: #f4f6fa;
+  color: #1f2733;
+}
+
+.app { min-height: 100vh; }
+
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #0f2a43;
+  color: #fff;
+}
+
+.navbar .brand { font-weight: 700; font-size: 18px; color: #fff; text-decoration: none; }
+
+.nav-links { display: flex; gap: 12px; flex: 1; }
+
+.nav-links a { color: #cfe3f5; text-decoration: none; padding: 4px 6px; }
+.nav-links a:hover { color: #fff; }
+
+.nav-user { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+
+.main { padding: 24px; }
+
+.container { max-width: 1000px; margin: 0 auto; }
+
+.card {
+  background: #fff;
+  border: 1px solid #e1e6ef;
+  border-radius: 10px;
+  padding: 20px;
+  margin: 12px 0;
+}
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+
+.module-card h3 { margin-top: 0; }
+
+.btn {
+  display: inline-block;
+  background: #0f6bd4;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:hover { background: #0b56a8; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-small { padding: 6px 12px; font-size: 13px; }
+
+label { display: block; margin: 12px 0; font-size: 14px; color: #3a4657; }
+label input, label select {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid #cfd6e2;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+
+.error {
+  background: #fdecea;
+  border: 1px solid #f5b5ae;
+  color: #b3261e;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+.muted { color: #6b7686; font-size: 13px; }
+
+.banner {
+  background: #e8f1fb;
+  border: 1px solid #bfd8f2;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 12px 0;
+}
+
+.badge { padding: 3px 10px; border-radius: 999px; font-size: 12px; }
+.badge-ok { background: #e3f5e8; color: #1e7d3c; }
+.badge-demo { background: #fff3d6; color: #9a6a00; }
+
+.preview { max-width: 300px; border-radius: 10px; margin-top: 12px; }
+
+.result h2 { margin-top: 0; }
+.result-header { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+
+.confidence { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+.bar { flex: 1; height: 14px; background: #e6ebf3; border-radius: 8px; overflow: hidden; }
+.bar-fill { height: 100%; }
+.bar-high { background: #0f6bd4; }
+.bar-low { background: #f2b544; }
+
+.prob-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f0f2f7; }
+
+.images { display: flex; gap: 16px; margin: 12px 0; flex-wrap: wrap; }
+.images figure { margin: 0; }
+.images img { max-width: 260px; border-radius: 10px; }
+.images figcaption { font-size: 12px; color: #6b7686; text-align: center; margin-top: 4px; }
+
+.shap { margin: 12px 0; }
+.shap-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.shap-label { width: 150px; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shap-bar { flex: 1; height: 10px; background: #eceff5; border-radius: 6px; overflow: hidden; }
+.shap-pos { height: 100%; background: #0f6bd4; }
+.shap-neg { height: 100%; background: #e05d4a; }
+.shap-value { width: 60px; text-align: right; font-size: 13px; }
+
+.meta { display: flex; justify-content: space-between; font-size: 12px; color: #6b7686; margin: 12px 0; }
+.note { font-style: italic; }
+
+.history-list { display: flex; flex-direction: column; gap: 8px; }
+.history-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 16px; }
+
+.overlay {
+  position: fixed; inset: 0; background: rgba(15, 30, 50, 0.55);
+  display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 50;
+}
+.overlay-inner { max-width: 720px; width: 100%; max-height: 90vh; overflow: auto; }
+
+.auth-wrap { display: flex; justify-content: center; padding: 48px 16px; }
+.auth-card { max-width: 420px; width: 100%; }
+
+.stat { text-align: center; }
+.stat h3 { font-size: 32px; margin: 0; }
+.stat p { color: #6b7686; }
