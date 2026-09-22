@@ -80,7 +80,9 @@ def _prepare(disease: str, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
         else:
             sys.exit(f"Missing column for feature {name} in {list(df.columns)}")
 
-    X = X.fillna(X.median())
+    if disease == "diabetes":
+        for column in ("glucose", "blood_pressure", "skin_thickness", "insulin", "bmi"):
+            X[column] = X[column].replace(0, np.nan)
     return X, y
 
 
@@ -88,7 +90,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Train tabular ML model (diabetes / heart)")
     parser.add_argument("disease", choices=["diabetes", "heart"])
     parser.add_argument("--data-dir", type=Path, default=Path("backend/ml/data"))
-    parser.add_argument("--model", choices=["rf", "xgb"], default="xgb")
+    parser.add_argument("--model", choices=["rf", "xgb", "logistic"], default="xgb")
     parser.add_argument("--register", action="store_true", help="Record model version in the app database")
     parser.add_argument("--out", type=Path, default=None)
     args = parser.parse_args()
@@ -100,16 +102,50 @@ def main() -> None:
     df = _load_data(args.disease, args.data_dir)
     X, y = _prepare(args.disease, df)
 
+    from sklearn.compose import ColumnTransformer
     from sklearn.ensemble import RandomForestClassifier
+    from sklearn.impute import SimpleImputer
+    from sklearn.linear_model import LogisticRegression
     from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
     from sklearn.model_selection import train_test_split
+    from sklearn.pipeline import Pipeline
+    from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+    if args.disease == "diabetes":
+        preprocessor = ColumnTransformer(
+            [("numeric", Pipeline([
+                ("impute", SimpleImputer(strategy="median")),
+                ("scale", StandardScaler()),
+            ]), list(X.columns))]
+        )
+    else:
+        categorical = ["sex", "cp", "fbs", "restecg", "exang", "slope", "thal"]
+        numeric = [column for column in X.columns if column not in categorical]
+        preprocessor = ColumnTransformer([
+            ("numeric", Pipeline([
+                ("impute", SimpleImputer(strategy="median")),
+                ("scale", StandardScaler()),
+            ]), numeric),
+            ("categorical", Pipeline([
+                ("impute", SimpleImputer(strategy="most_frequent")),
+                ("onehot", OneHotEncoder(handle_unknown="ignore")),
+            ]), categorical),
+        ])
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
     if args.model == "rf":
-        model = RandomForestClassifier(n_estimators=300, max_depth=8, random_state=42, n_jobs=-1)
+        model = RandomForestClassifier(
+            n_estimators=800,
+            min_samples_leaf=2,
+            class_weight="balanced",
+            random_state=42,
+            n_jobs=-1,
+        )
+    elif args.model == "logistic":
+        model = LogisticRegression(max_iter=3000, class_weight="balanced")
     else:
         from xgboost import XGBClassifier
 
@@ -117,8 +153,9 @@ def main() -> None:
             n_estimators=300, max_depth=4, learning_rate=0.05, eval_metric="logloss", random_state=42
         )
 
-    model.fit(X_train, y_train)
-    probs = model.predict_proba(X_test)[:, 1]
+    pipeline = Pipeline([("preprocess", preprocessor), ("model", model)])
+    pipeline.fit(X_train, y_train)
+    probs = pipeline.predict_proba(X_test)[:, 1]
     preds = (probs >= 0.5).astype(int)
 
     metrics = {
@@ -135,13 +172,14 @@ def main() -> None:
     metadata_path = out_dir / spec.metadata_file
     import joblib
 
-    joblib.dump(model, model_path)
+    joblib.dump(pipeline, model_path)
     metadata_path.write_text(
         json.dumps(
             {
                 "feature_names": list(X.columns),
                 "classes": spec.classes,
                 "model_type": args.model,
+                "preprocessing": "zero_as_missing" if args.disease == "diabetes" else "onehot_categorical",
                 "metrics": metrics,
             },
             indent=2,

@@ -94,7 +94,13 @@ export const API = {
 
 export async function downloadUrl(url, token) {
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
-  const response = await fetch(url, { headers });
+  const cacheBustUrl = new URL(url, window.location.origin);
+  cacheBustUrl.searchParams.set("_t", String(Date.now()));
+
+  const response = await fetch(cacheBustUrl.toString(), {
+    headers,
+    cache: "no-store",
+  });
   if (!response.ok) {
     let detail = response.statusText || "Download failed.";
     try {

@@ -12,12 +12,13 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def register(payload: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == payload.email.lower()).first():
+    email = str(payload.email).strip().lower()
+    if db.query(User).filter(User.email == email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
     if payload.role not in ("patient", "doctor", "admin"):
         raise HTTPException(status_code=400, detail="Invalid role")
     user = User(
-        email=payload.email.lower(),
+        email=email,
         full_name=payload.full_name,
         hashed_password=hash_password(payload.password),
         role=payload.role,
@@ -30,7 +31,8 @@ def register(payload: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(payload: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.email.lower()).first()
+    email = str(payload.email).strip().lower()
+    user = db.query(User).filter(User.email == email).first()
     if user is None or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     token = create_access_token(subject=str(user.id), role=user.role)

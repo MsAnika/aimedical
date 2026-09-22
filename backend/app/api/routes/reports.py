@@ -28,7 +28,13 @@ def create_report(prediction_id: int, user: User = Depends(get_current_user), db
     p = _ownership(prediction_id, user, db)
     existing = db.query(Report).filter(Report.prediction_id == p.id).first()
     if existing is not None:
-        return ReportOut(detail="Report already exists", report_id=existing.id, download_url=f"/api/reports/{existing.id}/download")
+        old_path = Path(existing.file_path)
+        path = generate_report(p)
+        existing.file_path = str(path)
+        db.commit()
+        if old_path != path and old_path.exists():
+            old_path.unlink()
+        return ReportOut(detail="Report regenerated", report_id=existing.id, download_url=f"/api/reports/{existing.id}/download")
     path = generate_report(p)
     report = Report(prediction_id=p.id, file_path=str(path))
     db.add(report)
@@ -46,4 +52,9 @@ def download_report(report_id: int, user: User = Depends(get_current_user), db: 
     path = Path(report.file_path)
     if not path.exists():
         raise HTTPException(status_code=404, detail="Report file missing")
-    return FileResponse(path, media_type="application/pdf", filename=path.name)
+
+    response = FileResponse(path, media_type="application/pdf", filename=path.name)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response

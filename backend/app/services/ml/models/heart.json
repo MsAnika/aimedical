@@ -18,13 +18,14 @@
     "No Heart Disease",
     "Heart Disease"
   ],
-  "model_type": "xgb",
+  "model_type": "logistic",
+  "preprocessing": "onehot_categorical",
   "metrics": {
-    "accuracy": 0.8333333333333334,
-    "precision": 0.8,
-    "recall": 0.8333333333333334,
-    "f1": 0.8163265306122449,
-    "roc_auc": 0.8666666666666666,
+    "accuracy": 0.8703703703703703,
+    "precision": 0.8148148148148148,
+    "recall": 0.9166666666666666,
+    "f1": 0.8627450980392157,
+    "roc_auc": 0.8986111111111111,
     "test_size": 54
   }
 }

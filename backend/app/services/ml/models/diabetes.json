@@ -13,13 +13,14 @@
     "No Diabetes",
     "Diabetes"
   ],
-  "model_type": "rf",
+  "model_type": "xgb",
+  "preprocessing": "zero_as_missing",
   "metrics": {
-    "accuracy": 0.7467532467532467,
-    "precision": 0.6595744680851063,
-    "recall": 0.5740740740740741,
-    "f1": 0.6138613861386139,
-    "roc_auc": 0.8166666666666667,
+    "accuracy": 0.7597402597402597,
+    "precision": 0.673469387755102,
+    "recall": 0.6111111111111112,
+    "f1": 0.6407766990291263,
+    "roc_auc": 0.8238888888888888,
     "test_size": 154
   }
 }

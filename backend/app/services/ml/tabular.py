@@ -39,7 +39,10 @@ class TabularClassifier:
         labels = classes or self.classes
         if not self.feature_names:
             self.feature_names = list(features.keys())
-        row = np.array([[float(features.get(name, 0.0)) for name in self.feature_names]])
+        row = pd.DataFrame(
+            [[float(features.get(name, 0.0)) for name in self.feature_names]],
+            columns=self.feature_names,
+        )
         probs = self.model.predict_proba(row)[0]
         idx = int(probs.argmax())
 

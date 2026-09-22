@@ -71,23 +71,6 @@ export default function ResultCard({ prediction }) {
           </figure>
         </div>
       )}
-      {prediction.explanation && prediction.explanation.shap_values && (
-        <div className="shap">
-          <h3>Feature influence (SHAP)</h3>
-          {prediction.explanation.shap_values.map((s) => (
-            <div key={s.feature} className="shap-row">
-              <span className="shap-label">{s.feature}</span>
-              <div className="shap-bar">
-                <div
-                  className={s.shap >= 0 ? "shap-pos" : "shap-neg"}
-                  style={{ width: `${Math.min(100, Math.abs(s.shap) * 400)}%` }}
-                />
-              </div>
-              <span className="shap-value">{s.shap >= 0 ? "+" : ""}{s.shap}</span>
-            </div>
-          ))}
-        </div>
-      )}
       {prediction.explanation?.note && <p className="muted note">{prediction.explanation.note}</p>}
       <div className="meta">
         <span>Model: {prediction.model_version}</span>

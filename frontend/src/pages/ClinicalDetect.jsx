@@ -10,9 +10,32 @@ const DEFAULTS = {
     insulin: 100, bmi: 26, diabetes_pedigree: 0.4, age: 40,
   },
   heart: {
-    age: 52, sex: 1, cp: 0, trestbps: 130, chol: 220, fbs: 0, restecg: 1,
-    thalach: 150, exang: 0, oldpeak: 0.5, slope: 1, ca: 0, thal: 2,
+    age: 52, sex: 1, cp: 1, trestbps: 130, chol: 220, fbs: 0, restecg: 1,
+    thalach: 150, exang: 0, oldpeak: 0.5, slope: 2, ca: 0, thal: 3,
   },
+};
+
+const FIELD_INFO = {
+  pregnancies: ["number of pregnancies", "0-20"],
+  glucose: ["blood sugar level", "0-300 mg/dL"],
+  blood_pressure: ["resting blood pressure", "0-200 mmHg"],
+  skin_thickness: ["skin fold thickness", "0-100 mm"],
+  insulin: ["blood insulin level", "0-900 mu U/mL"],
+  bmi: ["body mass index", "0-70"],
+  diabetes_pedigree: ["family risk score", "0-3"],
+  age: ["patient age", "1-120 years"],
+  sex: ["biological sex code", "0-1"],
+  cp: ["chest pain type", "1-4"],
+  trestbps: ["resting blood pressure", "50-250 mmHg"],
+  chol: ["blood cholesterol", "100-600 mg/dL"],
+  fbs: ["fasting sugar flag", "0-1"],
+  restecg: ["resting ECG code", "0-2"],
+  thalach: ["maximum heart rate", "60-220 bpm"],
+  exang: ["exercise angina flag", "0-1"],
+  oldpeak: ["ST depression value", "-5-10"],
+  slope: ["ST segment slope", "1-3"],
+  ca: ["major vessel count", "0-4"],
+  thal: ["thalassemia code", "3, 6, or 7"],
 };
 
 export default function ClinicalDetect() {
@@ -36,11 +59,11 @@ export default function ClinicalDetect() {
     });
   }, [token]);
 
-  function applyModule(flds) {
+  function applyModule(flds, moduleId = disease) {
     setFields(flds || []);
     const next = {};
     for (const f of flds || []) {
-      next[f.name] = DEFAULTS[disease]?.[f.name] ?? (f.type === "int" ? 0 : "");
+      next[f.name] = DEFAULTS[moduleId]?.[f.name] ?? (f.type === "int" ? 0 : "");
     }
     setValues(next);
   }
@@ -49,7 +72,7 @@ export default function ClinicalDetect() {
     setDisease(id);
     setResult(null);
     const mod = modules.find((m) => m.id === id);
-    applyModule(mod?.fields || []);
+    applyModule(mod?.fields || [], id);
   }
 
   async function onSubmit(e) {
@@ -84,7 +107,10 @@ export default function ClinicalDetect() {
         <div className="form-grid">
           {fields.map((f) => (
             <label key={f.name}>
-              {f.label}
+              <span className="field-label">{f.label}</span>
+              <span className="field-hint">
+                {FIELD_INFO[f.name]?.[0] || "clinical measure"} · {FIELD_INFO[f.name]?.[1] || "see valid options"}
+              </span>
               {f.options ? (
                 <select
                   value={values[f.name]}
